@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4.3/themes/default/easyui.css">   
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4.3/themes/icon.css">   
+	<script type="text/javascript" src="js/jquery-easyui-1.4.3/jquery.min.js"></script>   
+	<script type="text/javascript" src="js/jquery-easyui-1.4.3/jquery.easyui.min.js"></script>  
+	<script type="text/javascript" src="js/jquery-easyui-1.4.3/locale/easyui-lang-zh_CN.js"></script>
+</head>
+<script type="text/javascript">
+$(function() {
+	init();
+});
+function init() {
+	$('#dg').datagrid({    
+	    url:'studetList', 
+	    singleSelect:true,
+	    pagination:true,
+	    toolbar:"#tb",
+	    queryParams: {
+			stuName: $("#stuNam").textbox("getValue")
+		}
+	});  
+}
+//格式化班级
+function formatterClasses(value,row,index) {
+	return value.className;
+}
+function formattercaozuo(value,row,index){
+	return '<a  onclick="editStu('+index+')" href="javascript:void(0)">修改</a>  <a  onclick="delStu('+index+')" href="javascript:void(0)">删除</a>'
+}
+
+//添加
+function stuInsert() {
+	$("#insertSel").combobox({    
+	    url:'findClasses',    
+	    valueField:'classId',    
+	    textField:'className'   
+	});
+	$("#dd").dialog("open");
+}
+function  saveStu() {
+	var stuName=$("#insetName").val();
+	var stuSex=$("#sexSel").val();
+	//var stuAge=$("#insertAge").val();
+	var birthday=$("#birthday").datebox("getValue");
+	var classId=$("#insertSel").combobox("getValue");
+	
+	$.post("insertStudent",{
+		stuName:stuName,
+		stuSex:stuSex,
+		//stuAge:stuAge,
+		birthday:birthday,
+		classId:classId
+	},function(re){
+		if(re != null){
+			alert("添加成功");
+			$('#dg').datagrid("reload");
+			$("#dd").dialog("close");
+		}
+	},"json")
+	
+	
+}
+//修改
+
+function editStu(index){
+	//获取要修改的数据
+	var rows=$('#dg').datagrid("getRows");
+	var row=rows[index];
+	//填充表单
+	$("#updateSel").combobox({    
+	    url:'findClasses',    
+	    valueField:'classId',    
+	    textField:'className'   
+	});
+	$("#updatebirthday").datebox("setValue",row.birthday);
+	$("#updateSel").combobox("setValue",row.classes.classId);
+	$("#updateFrm").form("load",row)
+	//打开弹窗
+	$("#dt").dialog("open");
+}
+
+function updateStu(){
+	var stuId=$("#stuId").val();
+	var stuName=$("#updateName").val();
+	var stuSex=$("#updatesexSel").val();
+	//var stuAge=$("#updateAge").val();
+	var birthday=$("#updatebirthday").datebox("getValue");
+	var classId=$("#updateSel").combobox("getValue");
+	
+	$.post("insertStudent",{
+		stuId:stuId,
+		stuName:stuName,
+		stuSex:stuSex,
+		//stuAge:stuAge,
+		birthday:birthday,
+		classId:classId
+	},function(re){
+		if(re != null){
+			alert("修改成功");
+			$('#dg').datagrid("reload");
+			$("#dt").dialog("close");
+		}
+	},"json")
+	
+}
+//删除
+
+function delStu(index){
+	//获取要修改的数据
+	var rows=$('#dg').datagrid("getRows");
+	var stuId=rows[index].stuId;
+	$.messager.confirm("提示","确认删除么？",function(r){
+		if(r){
+			//删除
+			$.post("delect",{
+				stuId:stuId
+			},function(re){
+				if(re>0){
+					alert("删除成功");
+					$('#dg').datagrid("reload");
+				}
+			},"json")
+			
+		}
+	})
+}
+</script>
+<body>
+
+<table class="easyui-datagrid" id="dg">   
+    <thead>   
+        <tr>   
+            <th data-options="field:'stuId' ">编码</th>   
+            <th data-options="field:'stuName' ">名字</th>   
+            <th data-options="field:'stuSex' ">性别</th>   
+       		<th data-options="field:'birthday' ">生日</th>   
+         	<th data-options="field:'classes', formatter:formatterClasses">班级</th>  
+         	<th data-options="field:'caozuo',width:100,align:'right',formatter:formattercaozuo">操作</th>    
+        </tr>   
+    </thead>   
+</table>  
+<div id="tb">
+ 	<label>姓名</label>
+ 	<input class="easyui-textbox" id="stuNam"> 
+	<a href="javascript:void(0)" onclick="init()" class="easyui-linkbutton" data-options="iconCls:'icon-search' ">搜索</a>
+	<a href="javascript:void(0)"  onclick="stuInsert()" class="easyui-linkbutton" data-options="iconCls:'icon-add' ">添加</a>
+</div>
+<!--新增窗口  -->
+<div id="dd" class="easyui-dialog" title="My Dialog" style="width:400px;height:200px;"   
+        data-options="iconCls:'icon-add',modal:true,closed:true">   
+    <form  id="insertFrm" class="easyui-form">
+       <div>   
+        <label for="name">姓名:</label>   
+        <input class="easyui-validatebox" id="insetName" type="text" name="name" />   
+        </div> 
+        
+        <div>   
+        <label for="name">性别:</label>   
+          <select id="sexSel">
+            <option>男</option>
+            <option>女</option>
+          </select>  
+       </div>  
+       
+      <!--  <div>   
+        <label for="name">年龄:</label>   
+        <input class="easyui-validatebox" type="text" id="insertAge" />   
+        </div>  -->
+        
+        <div>   
+        <label for="name">生日:</label>   
+        <input class="easyui-datebox" id="birthday" type="text" />   
+        </div>   
+       
+       
+       <div>   
+        <label for="name">班级:</label>   
+        	<select id="insertSel"></select>  
+        </div>  
+        
+         <input type="button" onclick="saveStu()" value="保存">
+        
+         
+    </form>  
+</div>  
+
+
+<!--修改窗口  -->
+<div id="dt" class="easyui-dialog" title="My Dialog" style="width:400px;height:200px;"   
+        data-options="iconCls:'icon-add',modal:true,closed:true">   
+    <form  id="updateFrm" class="easyui-form">
+    <input type="hidden" name="stuId" id="stuId">
+       <div>   
+        <label for="name">姓名:</label>   
+        <input class="easyui-validatebox" id="updateName" type="text" name="stuName" />   
+        </div> 
+        
+        <div>   
+        <label for="name">性别:</label>   
+          <select id="updatesexSel" name="stuSex">
+            <option>男</option>
+            <option>女</option>
+          </select>  
+       </div>  
+       <!-- 
+       <div>   
+        <label for="name">年龄:</label>   
+        <input class="easyui-validatebox" type="text" id="updateAge" name="stuAge" />   
+        </div>  -->
+        
+        <div>   
+        <label for="name">生日:</label>   
+        <input class="easyui-datebox" id="updatebirthday" type="text" name="birthday"/>   
+        </div>   
+       
+       
+       <div>   
+        <label for="name">班级:</label>   
+        	<select id="updateSel" name="classId"></select>  
+        </div>  
+         <input type="button" onclick="updateStu()" value="保存">
+    </form>  
+</div>  
+
+
+
+</body>
+</html>
